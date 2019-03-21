@@ -9,7 +9,7 @@ services:
     ports:
       - ${STOCKTREND_PORT}:${STOCKTREND_PORT}
     volumes:
-      - ./defineword/data:/defineword/data
+      - ./stocktrend/data:/stocktrend/data
     environment:
       - APIKEY=${STOCKTREND_APIKEY}
       - PORT=${STOCKTREND_PORT}
