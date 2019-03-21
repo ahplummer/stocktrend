@@ -1,0 +1,16 @@
+version: '3.6'
+
+services:
+
+  stocktrend:
+    container_name: stocktrend.server
+    build:
+      context: ./src
+    ports:
+      - ${STOCKTREND_PORT}:${STOCKTREND_PORT}
+    volumes:
+      - ./defineword/data:/defineword/data
+    environment:
+      - APIKEY=${STOCKTREND_APIKEY}
+      - PORT=${STOCKTREND_PORT}
+    command: tail -f /dev/null
