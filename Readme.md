@@ -1,10 +1,34 @@
 # Instructions
 
+## Setup environment
+*Note: all commands executed from top-level project directory, unless specified differently.*
+* Setup a virtualenv: `virtualenv --python=python3 .venv`
+* Startup the virtualenv: `. .venv/bin/activate`
+* Get requirements: `pip install -r src/requirements.txt`
+* Get an API key [here](https://www.alphavantage.co).
+### Run tests
+* To run unit tests: `pushd test && python -m unittest && popd`
+
+## Run locally
+* Set environment variables:
+```
+export PORT=8511
+export APIKEY=<your key>
+```
+* Start Flask Webserver locally with `python src/driver.py`.
+
+### Test local endpoint
+* Use with curl from a new terminal:
+```
+curl --header "Content-Type: application/json" --request POST --data '{"symbol":"AAL","trenddays":3}' http://127.0.0.1:8511/trendclose
+```
+Output should be similar to: `{"lastclose": 31.45, "trend": -0.44}%`
+
 ## Build/Run container
 * Set / Inject environment variables:
 ```
 export STOCKTREND_PORT=8511
-export STOCKTREND_APIKEY=<get your key at https://www.alphavantage.co>
+export STOCKTREND_APIKEY=<your key>
 ```
 * Build docker image:
 ```
@@ -15,20 +39,26 @@ docker-compose up -d --build
 docker-compose exec stocktrend python3 driver.py
 ```
 
-## Test
-* Test with curl
+### Test dockerized endpoint
+* Use with curl from a new terminal:
 ```
-curl --header "Content-Type: application/json" --request POST --data '{"symbol":"MSFT","trenddays":3}' http://127.0.0.1:8511/trendclose
+curl --header "Content-Type: application/json" --request POST --data '{"symbol":"AAL","trenddays":3}' http://127.0.0.1:8511/trendclose
 ```
-Output should be similar to: `{"lastclose": 117.52, "trend": -0.04}`
+Output should be similar to: `{"lastclose": 31.45, "trend": -0.44}%`
 
-# Build/Run Serverless (AWS Lambda)
-Look at the `handler.py` file for more information, as there are some lessons learned through building 
+
+## Build/Run Serverless (AWS Lambda)
+*Prerequisite: You must have `serverless` installed. See [Serverless.com](http://serverless.com) for more information.*
+*Prerequisite: You must have `AWS CLI` installed, and have it configured to execute from the command line. You can test 
+this with `aws s3 ls`. If you get no errors, you can proceed.
+
+NOTE: Look at the `handler.py` file for more information, as there are some lessons learned through building 
 this that are significant.
-## Test
+
+### Build Lambda
 * Deploy with sls CLI:
 ```
-sls deploy
+pushd src && sls deploy && popd
 ```
 NOTE: copy down the output URL for later testing via `curl`.
 ```
@@ -41,35 +71,34 @@ resources: 10
 api keys:
   None
 endpoints:
-  POST - https://kwbp75f9p0.execute-api.us-east-1.amazonaws.com/dev/trendclose
+  POST - https://9eip1rau0j.execute-api.us-east-1.amazonaws.com/dev/trendclose
 functions:
   trendclose: stocktrend-dev-trendclose
 layers:
   None
 ```
+### Test serverless Lambda endpoint:
+
 * Test with sls CLI:
 ```
-sls invoke -f trendclose -l -d '{"apikey":"P7HHSPMQIGVSI3Q8","symbol":"AAL","trenddays":3}'
+pushd src && sls invoke -f trendclose -l -d '{"apikey":"<your key>","symbol":"AAL","trenddays":3}' && popd
 ```
 This is what the output shows (with extra logging):
 ```
 {
     "statusCode": 200,
-    "body": "{\"lastclose\": 30.96, \"trend\": -1.34}"
+    "body": "{\"lastclose\": 31.45, \"trend\": -0.44}"
 }
---------------------------------------------------------------------
-START RequestId: 4f1ec5ef-b74f-46cd-8b46-53716102e665 Version: $LATEST
-Fetching https://www.alphavantage.co/query?apikey=P7HHSPMQIGVSI3Q8&function=TIME_SERIES_DAILY_ADJUSTED&symbol=AAL
-END RequestId: 4f1ec5ef-b74f-46cd-8b46-53716102e665
-REPORT RequestId: 4f1ec5ef-b74f-46cd-8b46-53716102e665	Duration: 227.07 ms	Billed Duration: 300 ms 	Memory Size: 1024 MB	Max Memory Used: 67 MB
 ```
-* Test with curl:
+* Test with curl from another terminal:
 ```
-curl --header "Content-Type: application/json" --request POST --data '{"apikey":"P7HHSPMQIGVSI3Q8","symbol":"AAL","trenddays":3}' https://kwbp75f9p0.execute-api.us-east-1.amazonaws.com/dev/trendclose
+curl --header "Content-Type: application/json" --request POST --data '{"apikey":"$APIKEY","symbol":"AAL","trenddays":3}'  https://9eip1rau0j.execute-api.us-east-1.amazonaws.com/dev/trendclose
 ```
-This is what the output shows: `{"lastclose": 30.96, "trend": -1.34}%`
+This is what the output shows: `{"lastclose": 31.45, "trend": -0.44}%`
 
-## Remove from Lambda
+### Remove from Lambda
 ```
-sls remove
+pushd src && sls remove && popd
 ```
+### Clean up 
+```rm -rf src/.serverless```
