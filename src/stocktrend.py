@@ -1,7 +1,5 @@
-import urllib.request, json, os
-from flask import Flask, request
+import urllib.request, json
 
-app = Flask(__name__)
 def getstockclosingprice(jsondata, day):
     if (day is None) or (day <= 0):
         return 'Bad parameter for day....'
@@ -42,16 +40,3 @@ def getjsonreturn(closing, trend):
     result = { "lastclose": closing, "trend": trend}
     result = json.dumps(result)
     return result
-
-@app.route("/trendclose", methods = ['POST'])
-def trendclose():
-    if request.method == 'POST':
-        symbol = request.json['symbol']
-        trenddays = request.json['trenddays']
-        jsondata = getstockjson(os.environ["APIKEY"], symbol)
-        closing = getstockclosingprice(jsondata, 1)
-        trend = getstocktrend(jsondata, trenddays)
-        return getjsonreturn(closing, trend)
-    
-if __name__ == "__main__":
-    app.run(host='0.0.0.0', port=os.environ["PORT"])
